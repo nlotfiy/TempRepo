@@ -1,8 +1,11 @@
-from interbotix_xs_modules.arm import InterbotixManipulatorXS
-import numpy as np
-import sys
-import time
+#!/usr/bin/env python3
 
+import sys
+
+from interbotix_common_modules.common_robot.robot import robot_shutdown, robot_startup
+from interbotix_xs_modules.xs_robot.arm import InterbotixManipulatorXS
+import numpy as np
+import time
 
 # To get started, open a terminal and type 'roslaunch interbotix_xsarm_control xsarm_control.launch robot_model:=wx250'
 # Then change to this directory and type 'python bartender.py  # python3 bartender.py if using ROS Noetic'
@@ -18,15 +21,29 @@ import time
 # 'wrist_rotate': (-180, 180)
 
 def main():
-    bot = InterbotixManipulatorXS("vx300s", "arm", "gripper")
+    bot = InterbotixManipulatorXS(
+        robot_model='vx300s',
+        group_name='arm',
+        gripper_name='gripper',
+    )
+    joint_abb = {
+    "t1": "waist",
+    "t2": "shoulder",
+    "t3": "elbow",
+    "t4": "forearm_roll",
+    "t5": "wrist_angle",
+    "t6": "wrist_rotate",
+    }
+    robot_startup()
 
     bot.arm.go_to_home_pose()
-    joint_name = input("Please enter the joint name: ")
+    
     try:
         while True:
+            joint_name = input("Please enter the joint name [t1-t6]: ")
             joint_var = float(input("Please enter the desired angle in degrees: "))
             joint_var_rad = (np.pi/180)*joint_var
-            bot.arm.set_single_joint_position(joint_name, joint_var_rad)
+            bot.arm.set_single_joint_position(joint_abb[joint_name], joint_var_rad)
             print(bot.arm.T_sb)
             time.sleep(2)
     except KeyboardInterrupt:
@@ -36,7 +53,8 @@ def main():
     
     bot.arm.go_to_sleep_pose()
 
-   
+    robot_shutdown()
+
 
 if __name__=='__main__':
     main()
